@@ -1,0 +1,46 @@
+# Sequencing data
+*.cram
+*.crai
+*.bam
+*.bai
+
+# Variant files
+*.vcf
+*.vcf.gz
+*.bcf
+*.tbi
+*.csi
+*.gvcf
+*.gvcf.gz
+
+# Reference genomes
+*.fa
+*.fasta
+*.fna
+*.fai
+
+# Models and large software files
+*.onnx
+*.jar
+
+# Pipeline outputs
+results/
+work/
+logs/
+
+# Generated chromosome configs
+configs/generated/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store

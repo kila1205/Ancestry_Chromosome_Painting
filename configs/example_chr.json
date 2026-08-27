@@ -1,0 +1,18 @@
+{
+  "EfficientDV.base_file_name": "SAMPLE_chr1",
+  "EfficientDV.cram_files": [
+    "/path/to/sample.cram"
+  ],
+  "EfficientDV.cram_index_files": [
+    "/path/to/sample.cram.crai"
+  ],
+  "EfficientDV.reference_genome": "hg38",
+  "EfficientDV.intervals_string": "chr1",
+  "EfficientDV.num_shards": 2,
+  "EfficientDV.make_gvcf": true,
+  "EfficientDV.recalibrate_vaf": false,
+  "EfficientDV.is_somatic": false,
+  "EfficientDV.normalize_strand_bias": false,
+  "EfficientDV.single_strand": false,
+  "EfficientDV.model_onnx": "/path/to/ultima-germline-model.onnx"
+}
