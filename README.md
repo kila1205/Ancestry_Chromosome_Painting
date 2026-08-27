@@ -1,8 +1,8 @@
 # Ancestry Chromosome Painting
 
-Chromosome-level ancestry workflow for whole-genome sequencing data.
+Chromosome level ancestry workflow for whole genome sequencing data.
 
-The pipeline was tested using the GIAB HG002 sample sequenced with Ultima Genomics. It starts from a CRAM aligned to GRCh38, performs chromosome-level variant calling with EfficientDV, phases the variants with Beagle, runs local ancestry inference with RFMix using the 1000 Genomes Project reference panel, and generates chromosome painting figures.
+The pipeline was tested using the GIAB HG002 sample sequenced with Ultima Genomics. It starts from a CRAM aligned to GRCh38, performs chromosome level variant calling with EfficientDV, phases the variants with Beagle, runs local ancestry inference with RFMix using the 1000 Genomes Project reference panel, and generates chromosome painting figures.
 
 The current workflow covers chromosomes 1-22.
 
@@ -10,8 +10,8 @@ The current workflow covers chromosomes 1-22.
 
 The main steps are:
 
-1. Generate chromosome-specific EfficientDV configuration files
-2. Run chromosome-level variant calling
+1. Generate chromosome specific EfficientDV configuration files
+2. Run chromosome level variant calling
 3. Filter and harmonize the study VCFs with the 1KGP reference panel
 4. Phase the study sample with Beagle
 5. Run RFMix for local ancestry inference
