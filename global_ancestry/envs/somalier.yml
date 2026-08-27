@@ -1,0 +1,12 @@
+name: ancestry_somalier
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - somalier
+  - samtools
+  - bcftools
+  - htslib

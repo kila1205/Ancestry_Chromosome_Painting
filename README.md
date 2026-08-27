@@ -1,46 +1,70 @@
-# Ancestry Chromosome Painting
+# Ancestry Analysis and Chromosome Painting
 
-Chromosome level ancestry workflow for whole genome sequencing data.
+This repository contains global and chromosome-level ancestry analysis workflows tested using the GIAB HG002 sample sequenced with Ultima Genomics.
 
-The pipeline was tested using the GIAB HG002 sample sequenced with Ultima Genomics. It starts from a CRAM aligned to GRCh38, performs chromosome level variant calling with EfficientDV, phases the variants with Beagle, runs local ancestry inference with RFMix using the 1000 Genomes Project reference panel, and generates chromosome painting figures.
+The analysis is divided into two parts:
 
-The current workflow covers chromosomes 1-22.
+1. **Global ancestry** using Somalier
+2. **Chromosome-level ancestry and chromosome painting** using Beagle and RFMix
+
+Both analyses use GRCh38/hg38 and population references from the 1000 Genomes Project (1KGP).
 
 ## Workflow
 
+### 1. Global ancestry
+
+The global ancestry workflow is located in [`global_ancestry/`](global_ancestry/).
+
+Somalier is used to extract ancestry-informative variants from the study CRAM and compare the sample with 1KGP reference individuals.
+
+The ancestry output includes:
+
+- predicted ancestry
+- AFR probability
+- AMR probability
+- EAS probability
+- EUR probability
+- SAS probability
+- PC1-PC10 coordinates
+
+The PCA coordinates can then be used to visualize the study sample together with the 1KGP reference populations.
+
+### 2. Chromosome-level ancestry
+
+The chromosome-level analysis starts from the same HG002 CRAM.
+
 The main steps are:
 
-1. Generate chromosome specific EfficientDV configuration files
-2. Run chromosome level variant calling
-3. Filter and harmonize the study VCFs with the 1KGP reference panel
-4. Phase the study sample with Beagle
-5. Run RFMix for local ancestry inference
-6. Plot the chromosome painting
+1. Chromosome-level variant calling with EfficientDV
+2. Filtering to biallelic SNPs
+3. Selection of SNPs shared between the study sample and 1KGP
+4. Phasing with Beagle
+5. Local ancestry inference with RFMix
+6. Chromosome painting across chr1-chr22
 
-## Test dataset
+## Dataset used
 
-The workflow was tested with HG002 from Genome in a Bottle (GIAB).
+The workflow was tested using the GIAB HG002 dataset generated on the Ultima Genomics platform.
 
 | Field | Value |
 |---|---|
 | Sample | HG002 |
 | CRAM sample ID | L7386 |
 | Platform | Ultima Genomics |
-| Reference | GRCh38 / hg38 |
-| Input | CRAM + CRAI |
-| CRAM used | `414004-L7386-Z0114-CAACATACATCAGAT.cram` |
+| CRAM | `414004-L7386-Z0114-CAACATACATCAGAT.cram` |
+| Genome reference | GRCh38 / hg38 |
 
-GIAB information:
+Genome in a Bottle (GIAB):
 
 https://www.nist.gov/programs-projects/genome-bottle
 
-The CRAM file is not included in this repository.
+Additional information about the reference files and datasets used in the analysis is available in [`resources/README.md`](resources/README.md).
 
 ## Reference data
 
 ### GRCh38
 
-Variant calling was performed against GRCh38/hg38.
+Variant calling and ancestry analysis were performed using GRCh38/hg38.
 
 Reference FASTA used during testing:
 
@@ -54,19 +78,13 @@ https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/references/
 
 ### 1000 Genomes Project
 
-Local ancestry inference uses the high-coverage 1000 Genomes Project panel on GRCh38.
+The 1000 Genomes Project was used as the population reference for both global and chromosome-level ancestry analysis.
 
-Dataset information:
-
-https://www.internationalgenome.org/faq/what-are-the-different-data-collections-available-for-1000-genomes/
-
-Phased high-coverage VCFs:
+For chromosome-level ancestry, the phased high-coverage GRCh38 panel was used:
 
 https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/
 
-The high-coverage collection contains 3,202 samples sequenced at approximately 30x and analyzed on GRCh38.
-
-The ancestry groups used in the RFMix reference are:
+The five ancestry superpopulations used in the analysis are:
 
 - AFR - African
 - AMR - Admixed American
@@ -76,19 +94,22 @@ The ancestry groups used in the RFMix reference are:
 
 ### Genetic maps
 
-GRCh38 PLINK genetic maps used for Beagle and RFMix can be downloaded from:
+GRCh38 genetic maps used for Beagle and RFMix:
 
 https://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/plink.GRCh38.map.zip
 
-More details about the reference files are available in:
-
-```text
-resources/README.md
-```
-
 ## Requirements
 
-The workflow uses:
+### Global ancestry
+
+- Nextflow
+- Somalier
+- bcftools
+- Python 3
+- pandas
+- matplotlib
+
+### Chromosome-level ancestry
 
 - miniwdl
 - Ultima HealthOmics EfficientDV workflow
@@ -97,21 +118,37 @@ The workflow uses:
 - Beagle
 - RFMix
 - Python 3
-- Matplotlib
+- matplotlib
 
-The large reference datasets and software binaries are not included in this repository.
+## Running global ancestry
 
-## Usage
-
-### 1. Generate EfficientDV chromosome configs
-
-An example configuration is available at:
+The global ancestry pipeline is available in:
 
 ```text
-configs/example_chr.json
+global_ancestry/
 ```
 
-Generate configs for chromosomes 1-22 with:
+Example:
+
+```bash
+cd global_ancestry
+
+nextflow run main.nf \
+  --input samplesheets/example.csv \
+  --sites /path/to/sites.hg38.vcf.gz \
+  --sites_index /path/to/sites.hg38.vcf.gz.tbi \
+  --fasta /path/to/Homo_sapiens_assembly38.fasta \
+  --reference /path/to/1kg-somalier \
+  --labels /path/to/ancestry-labels-1kg.tsv \
+  --outdir results \
+  -with-conda
+```
+
+More information is available in [`global_ancestry/README.md`](global_ancestry/README.md).
+
+## Running chromosome-level ancestry
+
+### 1. Generate chromosome configs
 
 ```bash
 python3 scripts/generate_chr_configs.py \
@@ -121,95 +158,102 @@ python3 scripts/generate_chr_configs.py \
   --sample HG002
 ```
 
-The generated configs are written to:
-
-```text
-configs/generated/
-```
-
-### 2. Run chromosome-level variant calling
-
-Set the path to the EfficientDV WDL and run:
+### 2. Run chromosome variant calling
 
 ```bash
 WDL=/path/to/efficient_dv.wdl \
 bash scripts/run_variant_calling.sh
 ```
 
-The script processes chromosomes 1-22 separately.
-
-### 3. Run local ancestry analysis
-
-Before running this step, update the paths for the 1KGP reference panel, population labels, Beagle, RFMix and genetic maps if they are stored outside the default project structure.
-
-Run:
+### 3. Run local ancestry inference
 
 ```bash
 bash scripts/run_ancestry_chr1_22.sh
 ```
 
-For each chromosome, this script performs:
+This performs SNP filtering, shared-marker selection, Beagle phasing and RFMix ancestry inference for chr1-chr22.
 
-- study SNP filtering
-- 1KGP SNP filtering
-- shared-marker selection
-- preparation of the ancestry-labelled 1KGP reference
-- Beagle phasing
-- genetic map conversion
-- RFMix local ancestry inference
+### 4. Generate chromosome painting
 
-### 4. Plot chromosome painting
-
-Generate the combined chromosome painting:
+Combined chromosome painting:
 
 ```bash
 python3 scripts/plot_chromosome_painting.py
 ```
 
-Generate separate plots for each chromosome:
+Individual chromosome figures:
 
 ```bash
 python3 scripts/plot_each_chromosome.py
 ```
 
-## Example result
+## Example results
 
-Combined chromosome painting for HG002 across chromosomes 1-22:
+### Global ancestry PCA
+
+Example PCA generated from the HG002 Somalier ancestry analysis:
+
+![HG002 global ancestry PCA](global_ancestry/docs/figures/HG002_global_ancestry_PCA.png)
+
+### Chromosome painting
+
+Chromosome painting generated from the HG002 local ancestry analysis across chr1-chr22:
 
 ![HG002 chromosome painting](docs/figures/chromosome_painting_example.png)
-
-The ancestry classes in the plot correspond to AFR, AMR, EAS, EUR and SAS.
 
 ## Repository structure
 
 ```text
 Ancestry_Chromosome_Painting/
+├── global_ancestry/
+│   ├── README.md
+│   ├── main.nf
+│   ├── nextflow.config
+│   ├── modules/
+│   │   ├── validate_input.nf
+│   │   ├── somalier_extract.nf
+│   │   └── somalier_ancestry.nf
+│   ├── envs/
+│   │   └── somalier.yml
+│   ├── samplesheets/
+│   │   └── example.csv
+│   ├── scripts/
+│   │   └── plot_pca.py
+│   └── docs/
+│       └── figures/
+│           └── HG002_global_ancestry_PCA.png
 ├── configs/
 │   └── example_chr.json
-├── docs/
-│   └── figures/
-│       └── chromosome_painting_example.png
-├── resources/
-│   └── README.md
 ├── scripts/
 │   ├── generate_chr_configs.py
 │   ├── run_variant_calling.sh
 │   ├── run_ancestry_chr1_22.sh
 │   ├── plot_chromosome_painting.py
 │   └── plot_each_chromosome.py
+├── resources/
+│   └── README.md
+├── docs/
+│   └── figures/
+│       └── chromosome_painting_example.png
 ├── .gitignore
 └── README.md
 ```
 
-## Output
+## Main outputs
 
-Main outputs include:
+The global ancestry workflow produces:
+
+- Somalier extraction output
+- predicted global ancestry
+- AFR, AMR, EAS, EUR and SAS ancestry probabilities
+- PCA coordinates
+- PCA visualization
+
+The chromosome-level workflow produces:
 
 - chromosome-specific study VCFs
-- harmonized study and 1KGP VCFs
+- study and 1KGP VCFs containing shared SNPs
 - phased study VCFs
 - RFMix local ancestry results
-- combined chromosome painting
+- combined chr1-chr22 chromosome painting
 - individual chromosome painting figures
-
-Large input files, reference datasets and generated results are excluded from Git.
